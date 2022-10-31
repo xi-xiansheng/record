@@ -368,7 +368,7 @@ void TestObjectPool()
 &emsp;&emsp;前文我们说到，自由链表可以管理好切好的小块内存，那么我们可以使用多个自由链表管理256KB的需求。因此**thread cache**实际上一个**哈希桶**结构，每个桶中存放的都是一个自由链表。
 &emsp;&emsp;**thread cache**被设计支持小于等于256KB内存的申请，倘若每种字节都使用一个自由链表来管理，即需要256 * 1024 = 262144个自由链表，这显然是消耗大量内存且得不偿失的，因此我们需要平衡牺牲。我们在这选择一些值进行**向上对齐**，比如申请1 ~ 8个字节，我们直接给它8个字节，申请9 ~ 16个字节，统一给16个字节，并以此类推。结构如下图所示：
 
-![image-20221021131408542](https://xcs-md-images.oss-cn-nanjing.aliyuncs.com/Linux/ConcurrencyMemoryPool/202210211314178.png)
+![image-20221031110301268](https://xcs-md-images.oss-cn-nanjing.aliyuncs.com/Linux/ConcurrencyMemoryPool/202210311103739.png)
 
 &emsp;&emsp;因此，当某一线程申请内存时，我们先计算得出其**对齐字节数**，并计算出**哈希映射**的下标，再去对应下标的**自由链表**下申请内存。若内存不够，那就需要向下一层的**central cache**获取。同时我们注意到，这样做不可避免的产生了一些内部碎片，不过并无较大影响。
 
